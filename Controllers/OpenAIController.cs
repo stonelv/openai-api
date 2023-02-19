@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using OpenAI_API.Completions;
+using OpenAI_API.Models;
 
 namespace openai_api.Controllers
 {
@@ -6,12 +8,22 @@ namespace openai_api.Controllers
     [Route("[controller]")]
     public class OpenAIController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
+
+        public OpenAIController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         [HttpGet]
         public async Task<IActionResult> Ask([FromQuery] string question)
         {
-            var api = new OpenAI_API.OpenAIAPI("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");
-            var result = await api.Completions.GetCompletion(question);
-            return Ok(result);
+            var apiKey = _configuration.GetSection("OpenAIKey").Value;
+            var api = new OpenAI_API.OpenAIAPI(apiKey);
+            var request = new CompletionRequest(question, model: Model.DavinciText, 
+                temperature: 0.6, max_tokens: 500);
+            var result = await api.Completions.CreateCompletionAsync(request);
+            return Ok(result.Completions.FirstOrDefault()?.Text);
         }
     }
 }
