@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using OpenAI_API.Chat;
 using OpenAI_API.Completions;
 using OpenAI_API.Models;
 
@@ -21,10 +23,18 @@ namespace openai_api.Controllers
         public async Task<IActionResult> Ask([FromQuery] string question)
         {
             var api = new OpenAI_API.OpenAIAPI(_apiKey);
-            var request = new CompletionRequest(question, model: Model.DavinciText, 
-                temperature: 0.6, max_tokens: 500);
-            var result = await api.Completions.CreateCompletionAsync(request);
-            return Ok(result.Completions.FirstOrDefault()?.Text);
+            var result = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
+            {
+                Model = Model.ChatGPTTurbo,
+                Temperature = 0.1,
+                MaxTokens = 500,
+                Messages = new ChatMessage[] {
+                    new ChatMessage(ChatMessageRole.User, question)
+                }
+            });
+
+            var reply = result.Choices[0].Message;
+            return Ok(reply.Content.Trim());
         }
 
         //[Route("Image")]
